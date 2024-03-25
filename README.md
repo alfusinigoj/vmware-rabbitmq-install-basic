@@ -21,9 +21,9 @@ Before continuing further, please have a look into the article [Install VMware R
 
 ### Getting started
 
-- Clone the repository down to the workstation.
+Clone the repository down to the workstation.
 
-- Connect to the Kubernetes cluster.
+Connect to the Kubernetes cluster.
 
 Summarized below are some of the kubernetes resources to be created in order to complete the installation, which we will see in detail later.
 
@@ -37,70 +37,70 @@ Summarized below are some of the kubernetes resources to be created in order to 
 
 Let's get into each of the above, one by one, more detailed.
 
-- **CertManager:** This is `optional` if cert manager is already installed, if not run the below command. Update the version as needed.
+**CertManager:** This is `optional` if cert manager is already installed, if not run the below command. Update the version as needed.
 
-    ```sh
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.5.3/cert-manager.yaml
-    ```
+  ```sh
+  kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.5.3/cert-manager.yaml
+  ```
 
-- **Setup Environment Variables and Secrets:** From the repo root folder, run the below command to create the environment secrets file.
+**Setup Environment Variables and Secrets:** From the repo root folder, run the below command to create the environment secrets file.
 
-    ```sh
-    mv ./.envrc.secrets.template ./.envrc.secrets
-    ```
+  ```sh
+  mv ./.envrc.secrets.template ./.envrc.secrets
+  ```
 
-    Update below **variables** in `./.envrc` and `./.envrc.secrets`
+  Update below **variables** in `./.envrc` and `./.envrc.secrets`
 
-    ```
-    export CFG_registry__username=
-    export CFG_registry__password=
-    ```
+  ```
+  export CFG_registry__username=
+  export CFG_registry__password=
+  ```
 
-    Run command `direnv allow` so as to refresh the ENV onto your command scope. 
+  Run command `direnv allow` so as to refresh the ENV onto your command scope. 
 
-- **Update YTT values:** Update the **value files** available in `values` folder as needed (especially the rabbitmq specific configuration, persistence_storage_class and persistence_storage)
+**Update YTT values:** Update the **value files** available in `values` folder as needed (especially the rabbitmq specific configuration, persistence_storage_class and persistence_storage)
 
-- Execute the below `kapp` commands in the given order, so as to create the rabbitmq cluster, its advisable to provide a few seconds of cooling time between execution of each command, especially after `package install` and `cluster`. It is also advisable to use `kubectl get` or `kubectl describe` command to verify these statuses.
+Execute the below `kapp` commands in the given order, so as to create the rabbitmq cluster, its advisable to provide a few seconds of cooling time between execution of each command, especially after `package install` and `cluster`. It is also advisable to use `kubectl get` or `kubectl describe` command to verify these statuses.
 
-- **Namespaces:**: This creates the app `tanzu-rabbitmq-namespaces`, which creates the necessary **Namespaces**, one for `secrets`, second one for the `package install & package repository` and the third one for the `rabbitmq server cluster` itself. 
+**Namespaces:**: This creates the app `tanzu-rabbitmq-namespaces`, which creates the necessary **Namespaces**, one for `secrets`, second one for the `package install & package repository` and the third one for the `rabbitmq server cluster` itself. 
 
-    ```sh
-    ytt --ignore-unknown-comments -f ./templates/00-namespaces.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-namespaces -f- -y
-    ```
+  ```sh
+  ytt --ignore-unknown-comments -f ./templates/00-namespaces.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-namespaces -f- -y
+  ```
 
-- **Secrets, SecretImports and SecretExports:** This creates the app `tanzu-rabbitmq-secrets`, which creates a kubernetes `secret` in `generic-secrets` namespace, then a [secret export](https://github.com/carvel-dev/secretgen-controller/blob/develop/docs/secret-export.md) and [SecretExports](https://github.com/carvel-dev/secretgen-controller/blob/develop/docs/secret-export.md) in `generic-secrets` namespace, which is used to export the `secret` to any targeted namespaces, which is configured by using a [secret import](https://github.com/carvel-dev/secretgen-controller/blob/develop/docs/secret-export.md) created at the target namespace. Here, the secret `tanzu-registry-credentials-secret` is exported to the namespaces `rabbitmq-installers` and `rabbitmq-clusters`.
+**Secrets, SecretImports and SecretExports:** This creates the app `tanzu-rabbitmq-secrets`, which creates a kubernetes `secret` in `generic-secrets` namespace, then a [secret export](https://github.com/carvel-dev/secretgen-controller/blob/develop/docs/secret-export.md) and [SecretExports](https://github.com/carvel-dev/secretgen-controller/blob/develop/docs/secret-export.md) in `generic-secrets` namespace, which is used to export the `secret` to any targeted namespaces, which is configured by using a [secret import](https://github.com/carvel-dev/secretgen-controller/blob/develop/docs/secret-export.md) created at the target namespace. Here, the secret `tanzu-registry-credentials-secret` is exported to the namespaces `rabbitmq-installers` and `rabbitmq-clusters`.
 
-    ```sh
-    ytt --ignore-unknown-comments -f ./templates/01-secrets.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-secrets -f- -y
-    ```
+  ```sh
+  ytt --ignore-unknown-comments -f ./templates/01-secrets.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-secrets -f- -y
+  ```
 
-- **ServiceAccounts, ClusterRoles and ClusterRoleBindings:** This creates the app `tanzu-rabbitmq-serviceaccounts`, which creates the necessary `cluster role`, `service account` and a `cluster role binding` providing required permissions to the `service account`. This is the service account which will be used by the package installer and the rabbitmq operators.
+**ServiceAccounts, ClusterRoles and ClusterRoleBindings:** This creates the app `tanzu-rabbitmq-serviceaccounts`, which creates the necessary `cluster role`, `service account` and a `cluster role binding` providing required permissions to the `service account`. This is the service account which will be used by the package installer and the rabbitmq operators.
 
-    ```sh
-    ytt --ignore-unknown-comments -f ./templates/02-serviceaccount.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-serviceaccounts -f- -y
-    ```
+  ```sh
+  ytt --ignore-unknown-comments -f ./templates/02-serviceaccount.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-serviceaccounts -f- -y
+  ```
 
-- **PackageRepository:** This creates the app `tanzu-rabbitmq-package-repository`, which creates the necessary `package repository`, which pulls in the required packages from pivnet.
+**PackageRepository:** This creates the app `tanzu-rabbitmq-package-repository`, which creates the necessary `package repository`, which pulls in the required packages from pivnet.
 
-    ```sh
-    ytt --ignore-unknown-comments -f ./templates/03-package-repository.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-package-repository -f- -y && sleep 30
-    ```
+  ```sh
+  ytt --ignore-unknown-comments -f ./templates/03-package-repository.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-package-repository -f- -y && sleep 30
+  ```
 
-    > Note 1: At this point you may have to accept EULA for the package `p-rabbitmq-for-kubernetes/tanzu-rabbitmq-package-repo` if not already.
+  > Note 1: At this point you may have to accept EULA for the package `p-rabbitmq-for-kubernetes/tanzu-rabbitmq-package-repo` if not already.
 
-    > Note 2: Better to wait for few seconds before running the next command or verify if the package is loaded using `kubectl get packages -A | grep " rabbitmq.tanzu.vmware.com.1.5.3"`
+  > Note 2: Better to wait for few seconds before running the next command or verify if the package is loaded using `kubectl get packages -A | grep " rabbitmq.tanzu.vmware.com.1.5.3"`
 
-- **PackageInstall:** Execute the below code block in a command shell to create the app `tanzu-rabbitmq-package-install`, which all the rabbitmq operators, here it is [Cluster Operator](https://docs.vmware.com/en/VMware-RabbitMQ-for-Kubernetes/1/rmq/kubernetes-operator-using-operator.html), [Messaging Topology Operator](https://docs.vmware.com/en/VMware-RabbitMQ-for-Kubernetes/1/rmq/kubernetes-operator-using-topology-operator.html) and [Standby Replication Operator](https://docs.vmware.com/en/VMware-RabbitMQ-for-Kubernetes/1/rmq/vmware_standby_repl_operator.html)
+**PackageInstall:** Execute the below code block in a command shell to create the app `tanzu-rabbitmq-package-install`, which all the rabbitmq operators, here it is [Cluster Operator](https://docs.vmware.com/en/VMware-RabbitMQ-for-Kubernetes/1/rmq/kubernetes-operator-using-operator.html), [Messaging Topology Operator](https://docs.vmware.com/en/VMware-RabbitMQ-for-Kubernetes/1/rmq/kubernetes-operator-using-topology-operator.html) and [Standby Replication Operator](https://docs.vmware.com/en/VMware-RabbitMQ-for-Kubernetes/1/rmq/vmware_standby_repl_operator.html)
 
-    ```sh
-    ytt --ignore-unknown-comments -f ./templates/04-package-install.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-package-install -f- -y && sleep 30
-    ```
+  ```sh
+  ytt --ignore-unknown-comments -f ./templates/04-package-install.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-package-install -f- -y && sleep 30
+  ```
 
-- **RabbitMQCluster:** Execute the below code block in a command shell to create the app `tanzu-rabbitmq-cluster`, which creates the RabbitMQ Server Cluster.
+**RabbitMQCluster:** Execute the below code block in a command shell to create the app `tanzu-rabbitmq-cluster`, which creates the RabbitMQ Server Cluster.
 
-    ```sh
-    ytt --ignore-unknown-comments -f ./templates/05-rabbitmqcluster.yaml -f ./values/rabbitmq.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-cluster -f- -y && sleep 45
-    ```
+  ```sh
+  ytt --ignore-unknown-comments -f ./templates/05-rabbitmqcluster.yaml -f ./values/rabbitmq.yaml -f ./values/common.yaml --data-values-env CFG | kapp deploy -a tanzu-rabbitmq-cluster -f- -y && sleep 45
+  ```
 
 
 We should have a cluster ready in few seconds, once available, we can obtain the IP address and the credentials as below.
