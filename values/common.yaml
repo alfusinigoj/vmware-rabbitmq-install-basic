@@ -1,0 +1,42 @@
+#@data/values
+---
+#! Registry secret
+#@overlay/match missing_ok=True
+secrets:
+  namespace: generic-secrets
+
+#@overlay/match missing_ok=True
+tanzu:
+  registry_secret_name: tanzu-registry-credentials-secret
+  registry_secret_type: kubernetes.io/dockerconfigjson
+
+#@overlay/match missing_ok=True
+registry:
+  #@overlay/match missing_ok=True
+  server: registry.tanzu.vmware.com
+
+#! Rabbitmq Installation Package Repository
+#@overlay/match missing_ok=True
+#@overlay/match-child-defaults missing_ok=True
+rabbitmq: 
+  package_repo_name: tanzu-rabbitmq-repo
+  package: p-rabbitmq-for-kubernetes/tanzu-rabbitmq-package-repo
+  package_ref_name: rabbitmq.tanzu.vmware.com
+  package_version: 1.5.3
+  #! Rabbitmq Installation Cluster Role
+  cluster_role_name: tanzu-rabbitmq-install-cluster-role
+  #! Rabbitmq Installation Service Account
+  service_account_name: tanzu-rabbitmq #! This cannot be changed as it is used in the rabbitmq package
+  service_account_namespace: rabbitmq-installers #! This has to be the same as the rabbitmq package namespace
+  #! Rabbitmq Package Install
+  package_install_name: tanzu-rabbitmq
+  package_install_namespace: rabbitmq-installers #! This has to be the same as the service account namespace
+  #! Rabbitmq Installation Cluster Role Binding
+  cluster_role_binding_name: tanzu-rabbitmq-install-cluster-role-binding
+  #! Rabbitmq Operators
+  systems_namespace: rabbitmq-system #! This cannot be changed as it is used in the rabbitmq package
+  #! Rabbitmq Clusters 
+  cluster_namespace: rabbitmq-clusters #! This has to be the same as the (rabbitmq.cluster_namespace) from rabbitmq.yaml
+  service_type: LoadBalancer
+  persistence_storage_class: tkg-persistentvol
+  persistence_storage: 20Gi

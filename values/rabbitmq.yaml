@@ -1,0 +1,32 @@
+#@data/values
+---
+#! Rabbitmq Cluster
+#@overlay/match missing_ok=True
+#@overlay/match-child-defaults missing_ok=True
+rabbitmq:
+  cluster_namespace: rabbitmq-clusters #! This has to be the same as the (rabbitmq.cluster_namespace) from common.yaml
+  cluster_name: rabbitmq
+  replicas: 3
+  resources:
+    limits:
+      cpu: "1.5"
+      memory: 2Gi
+    requests:
+      cpu: "1"
+      memory: 2Gi
+  spec:
+    rabbitmq:
+      additionalPlugins:
+        - rabbitmq_stream
+        - rabbitmq_stream_management
+      additionalConfig: |
+        cluster_partition_handling = pause_minority
+        cluster_formation.node_cleanup.interval = 10
+        vm_memory_high_watermark_paging_ratio = 0.65
+        vm_memory_high_watermark.relative = 0.7
+        disk_free_limit.relative = 1.0
+        collect_statistics_interval = 30000
+        queue_leader_locator = balanced
+        log.console.level = info
+      advancedConfig: ""
+

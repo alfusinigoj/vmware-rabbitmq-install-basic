@@ -1,0 +1,42 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: #@ data.values.rabbitmq.cluster_name
+  namespace: #@ data.values.rabbitmq.cluster_namespace
+spec:
+  replicas: #@ data.values.rabbitmq.replicas
+  resources: #@ data.values.rabbitmq.resources
+  imagePullSecrets:
+  - name: #@ data.values.tanzu.registry_secret_name
+  service:
+    type: #@ data.values.rabbitmq.service_type
+  rabbitmq:
+    additionalPlugins: #@ data.values.rabbitmq.spec.rabbitmq.additionalPlugins
+    additionalConfig: #@ data.values.rabbitmq.spec.rabbitmq.additionalConfig
+    advancedConfig: #@ data.values.rabbitmq.spec.rabbitmq.advancedConfig
+  persistence:
+    storageClassName: #@ data.values.rabbitmq.persistence_storage_class
+    storage: #@ data.values.rabbitmq.persistence_storage
+  override: 
+    statefulSet:
+      spec:
+        template:
+          metadata:
+            annotations:
+              prometheus.io/port: "15692"
+              prometheus.io/scrape: "true"
+#! Below overlay is to replace the secret value  
+---
+#@ def replace(a):
+#@ return a.replace("ldap_bind_password_value", data.values.ldap.password)
+#@ end
+
+#@overlay/match by=overlay.subset({"kind": "RabbitmqCluster"})
+---
+spec:
+  rabbitmq:
+    #@overlay/replace via=lambda a,_: overlay.apply(replace(a))
+    additionalConfig:
