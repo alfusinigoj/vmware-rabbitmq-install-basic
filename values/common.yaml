@@ -38,5 +38,5 @@ rabbitmq:
   #! Rabbitmq Clusters 
   cluster_namespace: rabbitmq-clusters #! This has to be the same as the (rabbitmq.cluster_namespace) from rabbitmq.yaml
   service_type: LoadBalancer
-  persistence_storage_class: tkg-persistentvol
+  persistence_storage_class: <storage_class>
   persistence_storage: 20Gi
