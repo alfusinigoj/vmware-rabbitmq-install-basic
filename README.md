@@ -130,7 +130,7 @@ To quickly do a connectivity test using [RabbitMQ PerfTest](https://perftest.rab
 
 To manage the [Cluster Operator](https://docs.vmware.com/en/VMware-RabbitMQ-for-Kubernetes/1/rmq/kubernetes-operator-using-operator.html) from cli using [Kubectl](https://kubernetes.io/docs/tasks/tools/) plugin, follow the instruction [here](https://docs.vmware.com/en/VMware-RabbitMQ-for-Kubernetes/1/rmq/kubernetes-operator-kubectl-plugin.html?hWord=N4IghgNiBcIA4FMBOAzEBfIA).
 
-## Advanced Authentication Configuration for RabbitMQ
+### Advanced Authentication Configuration for RabbitMQ
 
 To enhance the security and it's management using mechanisms such as [OAuth 2.0](https://oauth.net/2/) or [LDAP](https://ldap.com/), check out [Configure RabbitMQ with Oauth2.0](https://www.alfusjaganathan.com/blogs/configure-oauth-rabbitmq/) or [Configure RabbitMQ with LDAP](https://www.alfusjaganathan.com/blogs/configure-ldap-rabbitmq/) as needed.
 
